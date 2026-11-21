@@ -1,0 +1,9 @@
+{
+  "name": "axuz-office-npm-tools",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ferramentas npm so de build do ONLYOFFICE DS (lockfile com integridade sha512). Substitui npm install -g grunt-cli sem pin.",
+  "dependencies": {
+    "grunt-cli": "1.4.3"
+  }
+}

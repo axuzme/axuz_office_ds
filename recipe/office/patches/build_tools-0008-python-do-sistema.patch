@@ -1,0 +1,21 @@
+diff --git a/scripts/base.py b/scripts/base.py
+--- a/scripts/base.py
++++ b/scripts/base.py
+@@ -2112,16 +2112,7 @@
+ def check_python():
+   if ("linux" != host_platform()):
+     return
+-  directory = __file__script__path__ + "/../tools/linux"
+-  directory_bin = __file__script__path__ + "/../tools/linux/python3/bin"
+-
+-  if not is_dir(directory + "/python3"):
+-    download('https://github.com/ONLYOFFICE-data/build_tools_data/raw/refs/heads/master/python/python3.tar.gz', directory + "/python3.tar.gz")
+-    download('https://github.com/ONLYOFFICE-data/build_tools_data/raw/refs/heads/master/python/extract.sh', directory + "/extract.sh")
+-    cmd_in_dir(directory, "chmod", ["+x", "./extract.sh"])
+-    cmd_in_dir(directory, "./extract.sh")
+-  directory_bin = directory_bin.replace(" ", "\\ ")
+-  os.environ["PATH"] = directory_bin + os.pathsep + os.environ["PATH"]
++  # AXUZ: python3.tar.gz do ONLYOFFICE-data e blob opaco; o build usa o python3 do apt da imagem builder (snapshot)
+   return
+ 
+ def check_tools():

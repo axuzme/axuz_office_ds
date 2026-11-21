@@ -1,0 +1,73 @@
+diff --git a/common/hash/hash.js b/common/hash/hash.js
+index 779dd4042b..a516ca73b9 100644
+--- a/common/hash/hash.js
++++ b/common/hash/hash.js
+@@ -79,7 +79,8 @@
+ 		{
+ 			this.stop();
+ 
+-			var worker_src = this.useWasm ? "engine.js" : "engine_ie.js";
++			// Modified by Axuz (2026-11-16): sem fallback asm.js (IE11); todo navegador suportado tem WebAssembly, e o *_ie.js nao e mais distribuido.
++			var worker_src = "engine.js";
+ 			worker_src = this.enginePath + worker_src;
+ 
+ 			this.worker = new Worker(worker_src);
+diff --git a/common/libfont/loader.js b/common/libfont/loader.js
+index ab62ba722f..f5578a2298 100644
+--- a/common/libfont/loader.js
++++ b/common/libfont/loader.js
+@@ -104,7 +104,8 @@
+ 			}
+ 		}
+ 
+-		var engine_name_ext = useWasm ? ".js" : "_ie.js";
++		// Modified by Axuz (2026-11-16): sem fallback asm.js (IE11); todo navegador suportado tem WebAssembly, e o *_ie.js nao e mais distribuido.
++		var engine_name_ext = ".js";
+ 		var _onSuccess = function(){
+ 		};
+ 		var _onError = function(){
+diff --git a/common/spell/spell.js b/common/spell/spell.js
+index 797710c06d..b661024232 100644
+--- a/common/spell/spell.js
++++ b/common/spell/spell.js
+@@ -106,7 +106,8 @@ function CSpellchecker(settings)
+ 	{
+ 		this.stop();
+ 
+-		var worker_src = this.useWasm ? "spell.js" : "spell_ie.js";
++		// Modified by Axuz (2026-11-16): sem fallback asm.js (IE11); todo navegador suportado tem WebAssembly, e o *_ie.js nao e mais distribuido.
++		var worker_src = "spell.js";
+ 		worker_src = this.enginePath + worker_src;
+ 
+ 		if (this.isUseSharedWorker)
+diff --git a/common/zlib/zlib.js b/common/zlib/zlib.js
+index 728ced8a0a..9daee69e82 100644
+--- a/common/zlib/zlib.js
++++ b/common/zlib/zlib.js
+@@ -48,7 +48,8 @@
+ 
+ 	var enginePath = AscCommon.RELATIVE_SDKJS_PATH + "common/zlib/engine/";
+ 
+-	var scriptSrc = useWasm ? "zlib.js" : "zlib_ie.js";
++	// Modified by Axuz (2026-11-16): sem fallback asm.js (IE11); todo navegador suportado tem WebAssembly, e o *_ie.js nao e mais distribuido.
++	var scriptSrc = "zlib.js";
+ 	scriptSrc = enginePath + scriptSrc;
+ 
+ 	window["AscCommon"].zlib_load = function(onSuccess, onError)
+diff --git a/pdf/src/viewer.js b/pdf/src/viewer.js
+index fea22304af..3dc43cdfab 100644
+--- a/pdf/src/viewer.js
++++ b/pdf/src/viewer.js
+@@ -989,10 +989,8 @@
+ 			}
+ 
+ 			var src = basePath;
+-			if (useWasm)
+-				src += "drawingfile.js";
+-			else
+-				src += "drawingfile_ie.js";
++			// Modified by Axuz (2026-11-16): sem fallback asm.js (IE11); todo navegador suportado tem WebAssembly, e o *_ie.js nao e mais distribuido.
++			src += "drawingfile.js";
+ 
+ 			scriptElem.setAttribute('src', src);
+ 			scriptElem.setAttribute('type','text/javascript');

@@ -1,0 +1,37 @@
+diff --git a/Common/config/default.json b/Common/config/default.json
+index b97a411..efaa56f 100644
+--- a/Common/config/default.json
++++ b/Common/config/default.json
+@@ -10,14 +10,14 @@
+     "prefix": "ds."
+   },
+   "aiSettings": {
+-    "enable": true,
++    "enable": false,
+     "actions": {},
+     "models": [],
+     "providers": {},
+     "version": 3,
+     "timeout": "5m",
+-    "allowedCorsOrigins": ["https://onlyoffice.github.io", "https://onlyoffice-plugins.github.io"],
+-    "allowBrowserProxy": true,
++    "allowedCorsOrigins": [],
++    "allowBrowserProxy": false,
+     "pluginSettings": {}
+   },
+   "log": {
+diff --git a/DocService/sources/ai/aiProxyHandler.js b/DocService/sources/ai/aiProxyHandler.js
+index 547efcd..ddbc098 100644
+--- a/DocService/sources/ai/aiProxyHandler.js
++++ b/DocService/sources/ai/aiProxyHandler.js
+@@ -60,7 +60,9 @@ const AI_KEY_PLACEHOLDER = '********';
+ 
+ // Server-wide (tenant-aware) AI switch: off hides AI Tools, stops shipping its settings and closes /ai-proxy.
+ function isAiEnabled(ctx) {
+-  return false !== ctx.getCfg('aiSettings.enable', cfgAiEnable);
++  // Modified by Axuz (2026-11-14): recurso de IA (plugin AI Tools / proxy de provedores externos) removido.
++  // Fixo em `false`: nao depende de config, para nenhuma configuracao reabrir o egress para provedores de IA.
++  return false;
+ }
+ 
+ /**

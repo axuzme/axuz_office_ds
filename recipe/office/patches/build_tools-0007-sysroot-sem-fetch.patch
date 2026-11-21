@@ -1,0 +1,16 @@
+diff --git a/scripts/config.py b/scripts/config.py
+index 2829425..1bf361e 100644
+--- a/scripts/config.py
++++ b/scripts/config.py
+@@ -89,8 +89,9 @@ def parse():
+       dst_dir = os.path.abspath(base.get_script_dir(__file__) + '/../tools/linux/sysroot')
+       dst_dir_amd64 = dst_dir + "/ubuntu16-amd64-sysroot"
+       dst_dir_arm64 = dst_dir + "/ubuntu16-arm64-sysroot"
+-      if not base.is_dir(dst_dir_amd64) or not base.is_dir(dst_dir_arm64):
+-        base.cmd_in_dir(dst_dir, "python3", ["./fetch.py", "all"])
++      # AXUZ: o sysroot amd64 e reconstruido pelo stage 10 do archive xenial; nunca baixado (fetch.py = tar.gz opaco, arm64 fora de escopo)
++      if not base.is_dir(dst_dir_amd64):
++        raise SystemExit("AXUZ-NO-BLOB: sysroot amd64 ausente (rode o stage sysroot); fetch.py do upstream desligado")
+       options["sysroot_linux_64"] = dst_dir_amd64
+       options["sysroot_linux_arm64"] = dst_dir_arm64
+     else:

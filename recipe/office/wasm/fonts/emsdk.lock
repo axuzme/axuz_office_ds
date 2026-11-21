@@ -1,0 +1,6 @@
+# emsdk.lock — imagem emscripten usada para compilar os wasm do ONLYOFFICE (fonts).
+# 3.1.48 = o "latest" do emsdk f677ef91 (o commit que o make.py upstream do core fazia checkout); o glue do fonts.wasm
+# upstream (getWasmTableEntry, convertI32PairToI53Checked, ExceptionInfo.ptr-24) e dessa linha.
+image=emscripten/emsdk
+tag=3.1.48
+digest=sha256:c952f592577a428698cb990c9656f395ae34424740f9c40bed4c3ee6d4850d29

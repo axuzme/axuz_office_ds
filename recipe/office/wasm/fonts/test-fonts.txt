@@ -1,0 +1,6 @@
+dejavu/DejaVuSans.ttf
+dejavu/DejaVuSerif.ttf
+liberation/LiberationSerif-Regular.ttf
+liberation/LiberationSans-Italic.ttf
+asana/ASANA.ttc
+noto/Noto_Sans_KR/NotoSansKR-Regular.otf

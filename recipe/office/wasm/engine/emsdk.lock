@@ -1,0 +1,3 @@
+# emsdk fixado por DIGEST: emscripten 2.0.32. Por que 2.0.32: com o fonte de 2021-11-12 do core esta versao reproduz BYTE A BYTE
+# o engine.wasm do sdkjs (sha256 8a0cb4c5...); 2.0.31 gera 65123 bytes (nao identico). Calibrado em 2026-11-15.
+emscripten/emsdk@sha256:5a3cb9b7b4414ea8bb12a0dfb86e256f4609e0e3293902e1c11c8625abbbc398

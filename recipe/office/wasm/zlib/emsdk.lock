@@ -1,0 +1,5 @@
+# emsdk fixado por DIGEST: emscripten 3.1.10. Calibrado em 2026-11-15 contra o zlib.wasm do sdkjs (1617419 bytes, 2022-08-10): o glue
+# versionado usa `_emscripten_get_heap_max()` (3.1.10 tem; 3.1.12+ trocou por getHeapMax()), o que limita a 3.1.10/3.1.11 (ou anteriores).
+# Com o fonte do core 9a6e7e2dc3 + make.py de 2022-08: 3.1.10 = 1609141 bytes (nao byte-identico), mas as tabelas de import/export
+# minificadas casam com o glue versionado e zlib/test.sh passa (docx/xlsx/pptx reais, imagens).
+emscripten/emsdk@sha256:f9eb0dd837978e66e26d8bc7dc6d29a58e90ca6e42b798f3bffd1b3ab786790c

@@ -1,0 +1,4 @@
+# office/wasm/drawingfile/deps.lock — terceiros que o build_tools BUSCA (fora da arvore do core) e o wasm compila.
+# id <TAB> origem <TAB> commit (sha1, conferido apos o fetch) <TAB> licenca <TAB> nota
+icu	https://github.com/unicode-org/icu.git	2d029329c82c7792b985024b2bdab5fc7278fbc8	Unicode-3.0 (ICU License)	tag release-74-2 (icu.py do build_tools: icu_major=74 icu_minor=2); so icu4c/source/common entra no wasm
+libxml2	https://github.com/GNOME/libxml2.git	39b66eb2089f491eacf8e22a7965a235f7f5735e	MIT	commit do fetch.py do core (Common/3dParty/libxml/fetch.py); os patches do fetch.py sao reaplicados por make_wasm.py

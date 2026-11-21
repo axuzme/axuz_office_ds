@@ -1,0 +1,71 @@
+diff --git a/scripts/core_common/modules/v8_89.py b/scripts/core_common/modules/v8_89.py
+index 256d3a1..4db8bd9 100644
+--- a/scripts/core_common/modules/v8_89.py
++++ b/scripts/core_common/modules/v8_89.py
+@@ -71,6 +71,8 @@ def fix_ubuntu24():
+   if "" == config.option("sysroot"):
+     return
+ 
++  if not os.path.isdir("third_party/llvm-build/Release+Asserts/lib"):
++    return  # AXUZ: sem clang baixado (is_clang=false, gcc do sysroot)
+   old_cur = os.getcwd()
+   os.chdir("third_party/llvm-build/Release+Asserts/lib")
+   base.cmd("mv", ["libstdc++.so.6", "libstdc++.so.6.old"])
+@@ -218,38 +220,33 @@ def make():
+     
+   if not base.is_dir("depot_tools"):
+     base.cmd("git", ["clone", "https://chromium.googlesource.com/chromium/tools/depot_tools.git"])
+-    # AXUZ: pin do depot_tools (reprodutibilidade); ultimo commit sem BooleanOptionalAction no fetch.py (py3.8 do bootstrap), 2025-11-21
+-    base.cmd_in_dir("depot_tools", "git", ["checkout", "b738decbefed1d63cc0238e4f3cac6665574f163"])
+-    change_bootstrap()
++    # AXUZ: o clone do depot_tools e pinado pelo blobs.lock (id depot-tools); NADA de bootstrap cipd
++    # (cpython 2.7/3.8 e git prebuilt do Google): python3 do sistema (DEPOT_TOOLS_BOOTSTRAP_PYTHON3=0)
+ 
+   os.environ["PATH"] = base_dir + "/depot_tools" + os.pathsep + os.environ["PATH"]
++  # AXUZ: gn e ninja compilados por nos (stage 40) na frente do depot_tools; nada de cipd
++  if "" != os.environ.get("AXUZ_TOOLBIN", ""):
++    os.environ["PATH"] = os.environ["AXUZ_TOOLBIN"] + os.pathsep + os.environ["PATH"]
++  os.environ["DEPOT_TOOLS_BOOTSTRAP_PYTHON3"] = "0"
++  os.environ["DEPOT_TOOLS_UPDATE"] = "0"
++  os.environ["DEPOT_TOOLS_METRICS"] = "0"
+ 
+   if ("windows" == base.host_platform()):
+     base.set_env("DEPOT_TOOLS_WIN_TOOLCHAIN", "0")
+     base.set_env("GYP_MSVS_VERSION", config.option("vs-version"))
+ 
+-  # fetch runs on the hermetic python of depot_tools, which change_bootstrap pins
+-  # to 3.8, too old for fetch.py; the system python3 is used instead, and the
+-  # bootstrap of the hermetic one is skipped
+-  if ("mac" == base.host_platform()):
+-    base.set_env("DEPOT_TOOLS_BOOTSTRAP_PYTHON3", "0")
+-
++  # AXUZ: checkout do V8 pelo commit do lock (tag 8.9.255.25), sem `fetch` (que traz o tip), sem hooks do DEPS
++  # (clang/gn/sysroot/vpython baixam binarios do Google) e sem as deps cipd (gn, luci-go). As deps git do DEPS ja
++  # sao fixadas por sha1 no proprio DEPS. Hooks necessarios (lastchange) rodam a mao abaixo.
+   if not base.is_dir("v8"):
+-    base.cmd("./depot_tools/fetch", ["v8"], True)
+-    base.copy_dir("./v8/third_party", "./v8/third_party_new")
+-    if ("windows" == base.host_platform()):
+-      os.chdir("v8")
+-      base.cmd("git", ["config", "--system", "core.longpaths", "true"], True)
+-      os.chdir("../")
+-    v8_branch_version = "remotes/branch-heads/8.9"
+-    if ("mac" == base.host_platform()):
+-      v8_branch_version = "remotes/branch-heads/9.9"
+-    base.cmd("./depot_tools/gclient", ["sync", "-r", v8_branch_version], True)
+-    base.cmd("gclient", ["sync", "--force"], True)
+-    base.copy_dir("./v8/third_party_new/ninja", "./v8/third_party/ninja")
+-    if ("linux" == base.host_platform()):
+-      if not base.is_file("./depot_tools/python3_bin_reldir.txt"):
+-        base.cmd_in_dir("./depot_tools", "./ensure_bootstrap", [], True)
++    v8_sha = base.axuz_lock_pin("v8-src")
++    base.writeFile("./.gclient", "solutions = [\n  {\n    \"name\": \"v8\",\n    \"url\": \"https://chromium.googlesource.com/v8/v8.git\",\n    \"deps_file\": \"DEPS\",\n    \"managed\": False,\n    \"custom_deps\": {\n      \"v8/buildtools/linux64\": None,\n      \"v8/tools/luci-go\": None,\n    },\n    \"custom_vars\": {},\n  },\n]\n")
++    base.cmd("./depot_tools/gclient", ["sync", "--nohooks", "--no-history", "-r", "v8@" + v8_sha])
++    base.cmd_in_dir("v8", "python3", ["build/util/lastchange.py", "-o", "build/util/LASTCHANGE"])
++    if not base.is_exist("v8/buildtools/linux64"):
++      base.create_dir("v8/buildtools/linux64")
++    if "" != os.environ.get("AXUZ_TOOLBIN", ""):
++      base.copy_file(os.environ["AXUZ_TOOLBIN"] + "/gn", "v8/buildtools/linux64/gn")
+ 
+   if ("windows" == base.host_platform()):
+     base.replaceInFile("v8/build/config/win/BUILD.gn", ":static_crt", ":dynamic_crt")

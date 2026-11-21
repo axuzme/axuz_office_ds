@@ -1,0 +1,6 @@
+# core.pin — commits cujo conteudo e compilado (ancestrais do pin do blobs.lock repo-core 76af764f).
+# O upstream removeu do core os scripts emscripten (fontengine/js em 2da2866862, 2026-05-12; Common/js em b77b3dc7e2, 2026-05-17).
+# core_commit = 8611c5f781 "Fix build" (2025-12-17 12:39), o commit que corrige libfont.json no dia em que o sdkjs atualizou
+# fonts.wasm (cfc208d80a "Update libfont", 2025-12-17). hyphen_commit = pin do blobs.lock (3p-hyphen-hyphen).
+core_commit=8611c5f7813b0b72cbce9234c16c01df0e1fc200
+hyphen_commit=3fb46d931fca96487712b0cfff60df79a1f48897

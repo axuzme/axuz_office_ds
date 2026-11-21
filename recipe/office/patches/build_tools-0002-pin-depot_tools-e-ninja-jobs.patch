@@ -1,0 +1,27 @@
+diff --git a/scripts/core_common/modules/v8_89.py b/scripts/core_common/modules/v8_89.py
+index 26b9505..256d3a1 100644
+--- a/scripts/core_common/modules/v8_89.py
++++ b/scripts/core_common/modules/v8_89.py
+@@ -218,6 +218,8 @@ def make():
+     
+   if not base.is_dir("depot_tools"):
+     base.cmd("git", ["clone", "https://chromium.googlesource.com/chromium/tools/depot_tools.git"])
++    # AXUZ: pin do depot_tools (reprodutibilidade); ultimo commit sem BooleanOptionalAction no fetch.py (py3.8 do bootstrap), 2025-11-21
++    base.cmd_in_dir("depot_tools", "git", ["checkout", "b738decbefed1d63cc0238e4f3cac6665574f163"])
+     change_bootstrap()
+ 
+   os.environ["PATH"] = base_dir + "/depot_tools" + os.pathsep + os.environ["PATH"]
+@@ -309,11 +311,11 @@ def make():
+       base.cmd2("gn", ["gen", "out.gn/linux_64", make_args(gn_args, "linux")], False)
+       os.environ["PKG_CONFIG_PATH"] = pkg_old
+ 
+-      base.cmd2("ninja", ["-C", "out.gn/linux_64"], False)
++      base.cmd2("ninja", ["-j" + os.environ.get("AXUZ_JOBS", "1"), "-C", "out.gn/linux_64"], False)
+       base.restore_sysroot_env()
+     else:
+       base.cmd2("gn", ["gen", "out.gn/linux_64", make_args(gn_args, "linux")], False)
+-      base.cmd2("ninja", ["-C", "out.gn/linux_64"], False)
++      base.cmd2("ninja", ["-j" + os.environ.get("AXUZ_JOBS", "1"), "-C", "out.gn/linux_64"], False)
+ 
+ 
+   if config.check_option("platform", "linux_32"):

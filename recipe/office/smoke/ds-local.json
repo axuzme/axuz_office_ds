@@ -1,0 +1,9 @@
+{
+  "services": { "CoAuthoring": {
+    "sql": { "dbHost": "axuz-office-pg" },
+    "redis": { "host": "axuz-office-redis" },
+    "secret": { "browser": {"string": "axuz-gate-test-secret"}, "inbox": {"string": "axuz-gate-test-secret"}, "outbox": {"string": "axuz-gate-test-secret"}, "session": {"string": "axuz-gate-test-secret"} },
+    "request-filtering-agent": { "allowPrivateIPAddress": true, "allowMetaIPAddress": true }
+  } },
+  "rabbitmq": { "url": "amqp://guest:guest@axuz-office-rabbit:5672" }
+}

@@ -1,0 +1,129 @@
+diff --git a/scripts/base.py b/scripts/base.py
+index a4c7792..a8e84dd 100644
+--- a/scripts/base.py
++++ b/scripts/base.py
+@@ -395,9 +395,107 @@ def writeFile(path, data):
+   writeFileCommon(path, data)
+   return
+ 
++
++# ---- AXUZ (modificado por Axuz, 2026-11-14): blobs so por lock ------------------------------------------------
++# Todo download/clone passa pelo blobs.lock (AXUZ_BLOB_LOCK): URL fora do lock => erro; tarball => sha256 conferido;
++# git clone => checkout do commit fixado (+ submodulos). Ver axuz_ops/office/blobs.lock e check-no-blob.sh.
++import hashlib
++
++def axuz_lock():
++  path = os.environ.get("AXUZ_BLOB_LOCK", "")
++  if "" == path or not os.path.isfile(path):
++    sys.exit("AXUZ-NO-BLOB: AXUZ_BLOB_LOCK ausente; o build exige o blobs.lock")
++  rows = {}
++  with open(path) as f:
++    next(f)
++    for line in f:
++      c = line.rstrip("\n").split("\t")
++      if len(c) >= 5:
++        rows[c[3]] = c
++  return rows
++
++def axuz_lock_pin(row_id):
++  with open(os.environ["AXUZ_BLOB_LOCK"]) as f:
++    for line in f:
++      c = line.rstrip("\n").split("\t")
++      if c[0] == row_id:
++        return c[4]
++  sys.exit("AXUZ-NO-BLOB: id ausente do lock: " + row_id)
++
++def axuz_sha256(path):
++  h = hashlib.sha256()
++  with open(path, "rb") as f:
++    for chunk in iter(lambda: f.read(1 << 20), b""):
++      h.update(chunk)
++  return h.hexdigest()
++
++def axuz_git_clone_pinned(prog, args):
++  # git clone <flags> <url> [dir]: sem --depth (precisa do commit pinado), depois checkout do sha do lock.
++  rest = list(args[1:])
++  url_i = -1
++  skip = False
++  clean = []
++  for a in rest:
++    if skip:
++      skip = False
++      continue
++    if a == "--depth":
++      skip = True
++      continue
++    if a.startswith("--depth="):
++      continue
++    clean.append(a)
++  for i, a in enumerate(clean):
++    if a.startswith("http://") or a.startswith("https://"):
++      url_i = i
++      break
++  if -1 == url_i:
++    sys.exit("AXUZ-NO-BLOB: git clone sem URL reconhecivel: " + " ".join(args))
++  url = clean[url_i]
++  row = axuz_lock().get(url)
++  if not row or "git" != row[1]:
++    sys.exit("AXUZ-NO-BLOB: git clone de origem fora do lock: " + url)
++  sha = row[4]
++  dest = clean[url_i + 1] if len(clean) > url_i + 1 else os.path.basename(url.rstrip("/"))
++  if dest.endswith(".git") and len(clean) <= url_i + 1:
++    dest = dest[:-4]
++  # tag/branch pedidos viram irrelevantes: o pin e o commit
++  flags = [a for a in clean[:url_i] if not a.startswith("--branch") and not a.startswith("--recursive")]
++  fl2 = []
++  skip_next = False
++  for a in clean[:url_i]:
++    if skip_next:
++      skip_next = False
++      continue
++    if a in ("-b", "--branch"):
++      skip_next = True
++      continue
++    if a.startswith("--branch=") or a == "--recursive" or a == "--single-branch":
++      continue
++    fl2.append(a)
++  ret = subprocess.call(["git", "clone"] + fl2 + [url, dest])
++  if 0 != ret:
++    return ret
++  ret = subprocess.call(["git", "-C", dest, "checkout", "-q", sha])
++  if 0 != ret:
++    return ret
++  ret = subprocess.call(["git", "-C", dest, "submodule", "update", "--init", "--recursive"])
++  if 0 != ret:
++    return ret
++  head = subprocess.check_output(["git", "-C", dest, "rev-parse", "HEAD"]).decode().strip()
++  if not head.startswith(sha):
++    sys.exit("AXUZ-NO-BLOB: HEAD " + head + " diverge do pin " + sha + " em " + dest)
++  return 0
++# ---- fim AXUZ -------------------------------------------------------------------------------------------------
++
+ # system cmd methods ------------------------------------
+ def cmd(prog, args=[], is_no_errors=False):
+   ret = 0
++  if "git" == prog and len(args) > 0 and "clone" == args[0]:
++    ret = axuz_git_clone_pinned(prog, args)
++    if ret != 0 and True != is_no_errors:
++      sys.exit("Error (git clone): " + str(ret))
++    return ret
+   if ("windows" == host_platform()):
+     sub_args = args[:]
+     sub_args.insert(0, get_path(prog))
+@@ -1246,7 +1344,15 @@ def web_apps_addons_param():
+ 
+ # common apps
+ def download(url, dst, is_no_errors=False):
+-  return cmd_exe("curl", ["-L", "-o", dst, url], is_no_errors)
++  # AXUZ: so URL do lock, com sha256 conferido (substitui o curl solto do upstream)
++  row = axuz_lock().get(url)
++  if not row or not row[4].startswith("sha256:"):
++    sys.exit("AXUZ-NO-BLOB: download fora do lock ou sem sha256: " + url)
++  ret = cmd_exe("curl", ["-fL", "-o", dst, url], is_no_errors)
++  if 0 == ret and axuz_sha256(dst) != row[4][7:]:
++    os.remove(dst)
++    sys.exit("AXUZ-NO-BLOB: sha256 divergente em " + url)
++  return ret
+ 
+ def extract(src, dst, is_no_errors=False):
+   app = "7za" if ("mac" == host_platform()) else "7z"

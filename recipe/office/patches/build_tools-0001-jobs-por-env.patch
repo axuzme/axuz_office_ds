@@ -1,0 +1,13 @@
+diff --git a/scripts/qmake.py b/scripts/qmake.py
+index 921934e..656026b 100644
+--- a/scripts/qmake.py
++++ b/scripts/qmake.py
+@@ -20,7 +20,7 @@ def get_make_file_suffix(platform):
+ 
+ def get_j_num():
+   if ("0" != config.option("multiprocess")):
+-    return ["-j" + str(multiprocessing.cpu_count())]
++    return ["-j" + os.environ.get("AXUZ_JOBS", str(multiprocessing.cpu_count()))]
+   return []
+ 
+ def check_support_platform(platform):

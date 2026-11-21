@@ -1,0 +1,978 @@
+diff --git a/apps/common/mobile/lib/view/EditToolbarButtons.jsx b/apps/common/mobile/lib/view/EditToolbarButtons.jsx
+new file mode 100644
+index 0000000..ab51426
+--- /dev/null
++++ b/apps/common/mobile/lib/view/EditToolbarButtons.jsx
+@@ -0,0 +1,96 @@
++/*
++ * Copyright (C) Ascensio System SIA, 2009-2026
++ *
++ * This program is a free software product. You can redistribute it and/or
++ * modify it under the terms of the GNU Affero General Public License (AGPL)
++ * version 3 as published by the Free Software Foundation, together with the
++ * additional terms provided in the LICENSE file.
++ *
++ * This program is distributed WITHOUT ANY WARRANTY; without even the implied
++ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. For
++ * details, see the GNU AGPL at: https://www.gnu.org/licenses/agpl-3.0.html
++ *
++ * You can contact Ascensio System SIA by email at info@onlyoffice.com
++ * or by postal mail at 20A-6 Ernesta Birznieka-Upisha Street, Riga,
++ * LV-1050, Latvia, European Union.
++ *
++ * The interactive user interfaces in modified versions of the Program
++ * are required to display Appropriate Legal Notices in accordance with
++ * Section 5 of the GNU AGPL version 3.
++ *
++ * No trademark rights are granted under this License.
++ *
++ * All non-code elements of the Product, including illustrations,
++ * icon sets, and technical writing content, are licensed under the
++ * Creative Commons Attribution-ShareAlike 4.0 International License:
++ * https://creativecommons.org/licenses/by-sa/4.0/legalcode
++ *
++ * This license applies only to such non-code elements and does not
++ * modify or replace the licensing terms applicable to the Program's
++ * source code, which remains licensed under the GNU Affero General
++ * Public License v3.
++ *
++ * SPDX-License-Identifier: AGPL-3.0-only
++ *
++ * Modified by Axuz (2026): this file is part of the Axuz patch that re-enables
++ * the mobile editing UI (web-apps-0001-mobile-edit.patch). Original copyright
++ * and license notices above are kept unchanged. Axuz additions are also
++ * licensed under AGPL-3.0-only; see the NOTAS file shipped with the patch.
++ */
++// Modified by Axuz (2026-11-14): edicao mobile religada (web-apps-0001-mobile-edit.patch); ver NOTICE-AXUZ.txt.
++
++/**
++ * O que: botoes de barra de ferramentas da edicao mobile (desfazer/refazer e
++ *        Editar/Adicionar), compartilhados pelos editores de documento,
++ *        planilha e apresentacao.
++ * Onde: consumido pelos lib/patch.jsx de cada editor (EditorUIController),
++ *       que por sua vez e usado por view/Toolbar.jsx.
++ * Efeitos colaterais: nenhum (componentes puros, sem estado).
++ */
++import React, { Fragment } from 'react';
++import { Link } from 'framework7-react';
++import { Device } from '../../utils/device';
++import SvgIcon from '../component/SvgIcon';
++import IconUndoIos from '@common-ios-icons/icon-undo.svg?ios';
++import IconUndoAndroid from '@common-android-icons/icon-undo.svg';
++import IconRedoIos from '@common-ios-icons/icon-redo.svg?ios';
++import IconRedoAndroid from '@common-android-icons/icon-redo.svg';
++import IconEditSettingsIos from '@common-ios-icons/icon-edit-settings.svg?ios';
++import IconEditSettingsAndroid from '@common-android-icons/icon-edit-settings.svg';
++import IconPlusIos from '@common-ios-icons/icon-plus.svg?ios';
++import IconPlusAndroid from '@common-android-icons/icon-plus.svg';
++
++/**
++ * O que: renderiza os dois botoes Desfazer e Refazer.
++ * Onde: chamado pelo Toolbar de cada editor quando isEdit e verdadeiro.
++ */
++export const UndoRedoButtons = ({disabledUndo, disabledRedo, onUndoClick, onRedoClick}) => (
++    <Fragment>
++        <Link key='btn-undo' iconOnly id='btn-undo' href={false}
++              className={disabledUndo ? 'disabled' : ''} onClick={onUndoClick}>
++            <SvgIcon symbolId={(Device.ios ? IconUndoIos : IconUndoAndroid).id} className={'icon icon-svg'} />
++        </Link>
++        <Link key='btn-redo' iconOnly id='btn-redo' href={false}
++              className={disabledRedo ? 'disabled' : ''} onClick={onRedoClick}>
++            <SvgIcon symbolId={(Device.ios ? IconRedoIos : IconRedoAndroid).id} className={'icon icon-svg'} />
++        </Link>
++    </Fragment>
++);
++
++/**
++ * O que: renderiza os botoes Editar (propriedades do objeto/texto) e
++ *        Adicionar (inserir objetos), que abrem os paineis de edicao.
++ * Onde: chamado pelo Toolbar de cada editor quando isEdit e verdadeiro.
++ */
++export const EditAddButtons = ({disabledEdit, disabledAdd, onEditClick, onAddClick}) => (
++    <Fragment>
++        <Link key='btn-edit' iconOnly id='btn-edit' href={false}
++              className={disabledEdit ? 'disabled' : ''} onClick={onEditClick}>
++            <SvgIcon symbolId={(Device.ios ? IconEditSettingsIos : IconEditSettingsAndroid).id} className={'icon icon-svg'} />
++        </Link>
++        <Link key='btn-add' iconOnly id='btn-add' href={false}
++              className={disabledAdd ? 'disabled' : ''} onClick={onAddClick}>
++            <SvgIcon symbolId={(Device.ios ? IconPlusIos : IconPlusAndroid).id} className={'icon icon-svg'} />
++        </Link>
++    </Fragment>
++);
+diff --git a/apps/documenteditor/mobile/src/lib/patch.jsx b/apps/documenteditor/mobile/src/lib/patch.jsx
+index 20e4c14..46a031f 100644
+--- a/apps/documenteditor/mobile/src/lib/patch.jsx
++++ b/apps/documenteditor/mobile/src/lib/patch.jsx
+@@ -31,27 +31,310 @@
+  * Public License v3.
+  *
+  * SPDX-License-Identifier: AGPL-3.0-only
++ *
++ * Modified by Axuz (2026): this file is part of the Axuz patch that re-enables
++ * the mobile editing UI (web-apps-0001-mobile-edit.patch). Original copyright
++ * and license notices above are kept unchanged. Axuz additions are also
++ * licensed under AGPL-3.0-only; see the NOTAS file shipped with the patch.
++ */
++// Modified by Axuz (2026-11-14): edicao mobile religada (web-apps-0001-mobile-edit.patch); ver NOTICE-AXUZ.txt.
++
++/**
++ * Controller de edicao mobile do Document Editor (EditorUIController).
++ *
++ * Contexto: no web-apps aberto este modulo e um stub que desliga a edicao
++ * ("private controller"). Esta versao, escrita pela Axuz, religa a edicao e
++ * implementa a interface que o resto do codigo espera (ver Main.jsx,
++ * view/Toolbar.jsx, controller/ContextMenu.jsx e store/focusObjects.js).
++ * A logica de menu de contexto e dos objetos em foco segue o comportamento
++ * que existia no proprio repositorio AGPL antes do commit b0c9a1c5d2
++ * ("[DE mobile] changes for private Editor controller"), reescrita contra os
++ * stores atuais.
++ */
++import React, { Fragment } from 'react';
++import { Device } from '../../../../common/mobile/utils/device';
++import { UndoRedoButtons, EditAddButtons } from '../../../../common/mobile/lib/view/EditToolbarButtons';
++import {
++    AddCommentController,
++    EditCommentController
++} from '../../../../common/mobile/lib/controller/collaboration/Comments';
++
++const EditorUIController = () => null;
++
++/**
++ * O que: informa que este build suporta recursos de edicao.
++ * Onde: Main.jsx (loadConfig, setPermissionOptions e a checagem de modo view).
++ */
++EditorUIController.isSupportEditFeature = () => true;
++
++/**
++ * O que: botoes Desfazer/Refazer da barra.
++ * Onde: view/Toolbar.jsx (esquerda no iOS, direita no Android).
++ */
++EditorUIController.getUndoRedo = (options) => <UndoRedoButtons {...options} />;
++
++/**
++ * O que: botoes Editar e Adicionar da barra.
++ * Onde: view/Toolbar.jsx; options = {disabledEdit, disabledAdd, onEditClick, onAddClick}.
+  */
++EditorUIController.getToolbarOptions = (options) => <EditAddButtons {...options} />;
+ 
+-const EditorUIController = () => {
+-    return null
++/**
++ * O que: controllers de adicionar/editar comentario (formularios modais).
++ * Onde: Main.jsx render(), ao lado do ViewCommentsController.
++ */
++EditorUIController.getEditCommentControllers = () => (
++    <Fragment>
++        <AddCommentController />
++        <EditCommentController />
++    </Fragment>
++);
++
++/**
++ * O que: repassa as cores de tema do SDK para Common.Utils.ThemeColor.
++ * Onde: Main.bindEvents. Necessario para as paletas de cor das telas de edicao.
++ */
++EditorUIController.initThemeColors = () => {
++    const api = Common.EditorApi.get();
++    api.asc_registerCallback('asc_onSendThemeColors', (colors, standartColors) => {
++        Common.Utils.ThemeColor.setColors(colors, standartColors);
++    });
+ };
+ 
+-EditorUIController.isSupportEditFeature = () => {
+-    return false
++/**
++ * O que: liga os eventos de formatacao de texto do SDK ao storeTextSettings
++ *        (lista de fontes, nome/tamanho, negrito/italico/sublinhado/tachado, listas).
++ * Onde: Main.bindEvents. Os demais eventos (alinhamento, cor etc.) ja sao do Main.
++ */
++EditorUIController.initFonts = (storeTextSettings) => {
++    const api = Common.EditorApi.get();
++    api.asc_registerCallback('asc_onInitEditorFonts', (fonts, select) => {
++        storeTextSettings.initEditorFonts(fonts, select);
++    });
++    api.asc_registerCallback('asc_onFontFamily', font => storeTextSettings.resetFontName(font));
++    api.asc_registerCallback('asc_onFontSize', size => storeTextSettings.resetFontSize(size));
++    api.asc_registerCallback('asc_onBold', value => storeTextSettings.resetIsBold(value));
++    api.asc_registerCallback('asc_onItalic', value => storeTextSettings.resetIsItalic(value));
++    api.asc_registerCallback('asc_onUnderline', value => storeTextSettings.resetIsUnderline(value));
++    api.asc_registerCallback('asc_onStrikeout', value => storeTextSettings.resetIsStrikeout(value));
++    api.asc_registerCallback('asc_onListType', data => {
++        const type = data.get_ListType();
++        const subtype = data.get_ListSubType();
++        storeTextSettings.resetListType(type);
++        switch (type) {
++            case 0: storeTextSettings.resetBullets(subtype); break;
++            case 1: storeTextSettings.resetNumbers(subtype); break;
++            case 2: storeTextSettings.resetMultiLevel(subtype); break;
++        }
++    });
+ };
+ 
+-EditorUIController.getToolbarOptions = () => {
+-    return null
++/**
++ * O que: estilos de paragrafo (miniaturas e nome do estilo atual).
++ * Onde: Main.bindEvents; storeParagraphSettings.
++ */
++EditorUIController.initEditorStyles = (storeParagraphSettings) => {
++    const api = Common.EditorApi.get();
++    api.asc_setParagraphStylesSizes(330, 38);
++    api.asc_registerCallback('asc_onInitEditorStyles', styles => storeParagraphSettings.initEditorStyles(styles));
++    api.asc_registerCallback('asc_onParaStyleName', name => storeParagraphSettings.changeParaStyleName(name));
++};
++
++/**
++ * O que: templates de estilo de tabela.
++ * Onde: Main.bindEvents; storeTableSettings.
++ */
++EditorUIController.initTableTemplates = (storeTableSettings) => {
++    const api = Common.EditorApi.get();
++    api.asc_registerCallback('asc_onInitTableTemplates', templates => storeTableSettings.initTableTemplates(templates));
++};
++
++/**
++ * O que: previews de estilo de grafico quando o SDK os atualiza.
++ * Onde: Main.bindEvents; storeChartSettings + storeFocusObjects.
++ */
++EditorUIController.updateChartStyles = (storeChartSettings, storeFocusObjects) => {
++    const api = Common.EditorApi.get();
++    api.asc_registerCallback('asc_onUpdateChartStyles', () => {
++        const chart = storeFocusObjects.chartObject;
++        if (chart && chart.get_ChartProperties()) {
++            storeChartSettings.updateChartStyles(api.asc_getChartPreviews(chart.get_ChartProperties().getType()));
++        }
++    });
+ };
+ 
+-EditorUIController.initFonts = () => null;
+-EditorUIController.initEditorStyles = () => null;
+-EditorUIController.initFocusObjects = () => null;
+-EditorUIController.initTableTemplates = () => null;
++/**
++ * O que: pega do array de objetos em foco o ObjectValue do ULTIMO (topo)
++ *        elemento que satisfaz o predicado.
++ * Onde: helper de initFocusObjects (getParagraphObject, getTableObject, ...).
++ */
++const topValue = (objects, predicate) => {
++    let found;
++    for (const object of objects) {
++        if (predicate(object)) found = object;
++    }
++    return found ? found.get_ObjectValue() : undefined;
++};
++
++/**
++ * O que: instala em storeFocusObjects a interface `intf` (filtros e getters por
++ *        tipo de objeto) e assina o evento asc_onFocusObject do SDK.
++ * Onde: Main.bindEvents. Os getters do store (paragraphObject, tableObject...)
++ *       delegam para `intf`; `settings` alimenta as abas de editar/adicionar.
++ */
++EditorUIController.initFocusObjects = (storeFocusObjects) => {
++    const T = () => Asc.c_oAscTypeSelectElement;
++    const objs = () => storeFocusObjects._focusObjects || [];
++    const isImage = o => o.get_ObjectType() === T().Image;
++
++    storeFocusObjects.intf = {
++        // Lista de strings que decide quais abas a UI mostra.
++        filterFocusObjects: () => {
++            const settings = [];
++            const add = name => settings.indexOf(name) < 0 && settings.push(name);
++            for (const object of objs()) {
++                const type = object.get_ObjectType();
++                const value = object.get_ObjectValue();
++                if (type === T().Header) add('header');
++                else if (type === T().Paragraph) { add('paragraph'); add('text'); }
++                else if (type === T().Table) add('table');
++                else if (type === T().Hyperlink) add('hyperlink');
++                else if (type === T().Image && value) {
++                    if (value.get_ChartProperties()) add('chart');
++                    else if (value.get_ShapeProperties()) add('shape');
++                    else add('image');
++                }
++            }
++            return settings;
++        },
++        getHeaderObject: () => topValue(objs(), o => o.get_ObjectType() === T().Header),
++        getParagraphObject: () => topValue(objs(), o => o.get_ObjectType() === T().Paragraph),
++        getShapeObject: () => topValue(objs(), o => isImage(o) && !!o.get_ObjectValue() && !!o.get_ObjectValue().get_ShapeProperties()),
++        getImageObject: () => topValue(objs(), o => {
++            const v = isImage(o) ? o.get_ObjectValue() : null;
++            return !!v && v.get_ShapeProperties() === null && v.get_ChartProperties() === null;
++        }),
++        getTableObject: () => topValue(objs(), o => o.get_ObjectType() === T().Table),
++        getChartObject: () => topValue(objs(), o => !!o.get_ObjectValue() && !!o.get_ObjectValue().get_ChartProperties && !!o.get_ObjectValue().get_ChartProperties()),
++        getLinkObject: () => topValue(objs(), o => o.get_ObjectType() === T().Hyperlink),
++    };
++
++    Common.EditorApi.get().asc_registerCallback('asc_onFocusObject', objects => {
++        storeFocusObjects.resetFocusObjects(objects);
++    });
++};
++
++/**
++ * O que: menu de contexto de edicao (copiar/recortar/colar/mesclar/dividir/
++ *        excluir/editar/link/revisao/comentario).
++ * Onde: controller/ContextMenu.jsx (initMenuItems quando isEdit e onMenuItemClick).
++ *       `ctx` e a instancia do controller (props, isComments, inRevisionChange...).
++ */
+ EditorUIController.ContextMenu = {
+-    mapMenuItems: () => [],
+-    handleMenuItemClick: () => true,
++    mapMenuItems: (ctx) => {
++        const { t, isEdit, canViewComments, canReview, isDisconnected } = ctx.props;
++        const _t = t("ContextMenu", { returnObjects: true });
++        const api = Common.EditorApi.get();
++        const stack = api.getSelectedElements();
++        const canCopy = api.can_CopyCut();
++        const itemsIcon = [], itemsText = [];
++
++        if (canCopy) itemsIcon.push({ event: 'copy', icon: 'icon-copy' });
++
++        let isText = false, isTable = false, isImage = false, isChart = false, isShape = false, isLink = false,
++            lockedText = false, lockedTable = false, lockedImage = false, lockedHeader = false;
++
++        stack.forEach(item => {
++            const type = item.get_ObjectType(), value = item.get_ObjectValue();
++            if (type === Asc.c_oAscTypeSelectElement.Header) {
++                lockedHeader = value.get_Locked();
++            } else if (type === Asc.c_oAscTypeSelectElement.Paragraph) {
++                lockedText = value.get_Locked();
++                isText = true;
++            } else if (type === Asc.c_oAscTypeSelectElement.Image) {
++                lockedImage = value.get_Locked();
++                if (value && value.get_ChartProperties()) isChart = true;
++                else if (value && value.get_ShapeProperties()) isShape = true;
++                else isImage = true;
++            } else if (type === Asc.c_oAscTypeSelectElement.Table) {
++                lockedTable = value.get_Locked();
++                isTable = true;
++            } else if (type === Asc.c_oAscTypeSelectElement.Hyperlink) {
++                isLink = true;
++            }
++        });
++
++        if (stack.length > 0 && isEdit && !isDisconnected) {
++            const unlocked = !lockedText && !lockedTable && !lockedImage && !lockedHeader;
++
++            if (unlocked && canCopy) {
++                itemsIcon.push({ event: 'cut', icon: 'icon-cut' });
++                // Ordem na UI: Cortar antes de Copiar.
++                [itemsIcon[0], itemsIcon[1]] = [itemsIcon[1], itemsIcon[0]];
++            }
++            if (unlocked) itemsIcon.push({ event: 'paste', icon: 'icon-paste' });
++
++            if (isTable && api.CheckBeforeMergeCells() && !lockedTable && !lockedHeader)
++                itemsText.push({ caption: _t.menuMerge, event: 'merge' });
++            if (isTable && api.CheckBeforeSplitCells() && !lockedTable && !lockedHeader)
++                itemsText.push({ caption: _t.menuSplit, event: 'split' });
++            if (unlocked) itemsText.push({ caption: _t.menuDelete, event: 'delete' });
++            if (isTable && !lockedTable && !lockedText && !lockedHeader)
++                itemsText.push({ caption: _t.menuDeleteTable, event: 'deletetable' });
++            if (unlocked) itemsText.push({ caption: _t.menuEdit, event: 'edit' });
++            if (!!api.can_AddHyperlink() && !lockedHeader)
++                itemsText.push({ caption: _t.menuAddLink, event: 'addlink' });
++
++            if (canReview) {
++                itemsText.push(ctx.inRevisionChange
++                    ? { caption: _t.menuReviewChange, event: 'reviewchange' }
++                    : { caption: _t.menuReview, event: 'review' });
++            }
++            if (ctx.isComments && canViewComments)
++                itemsText.push({ caption: _t.menuViewComment, event: 'viewcomment' });
++
++            const isObject = isShape || isChart || isImage || isTable;
++            const hideAddComment = !canViewComments || api.can_AddQuotedComment() === false || !unlocked || (!isText && isObject);
++            if (!hideAddComment) itemsText.push({ caption: _t.menuAddComment, event: 'addcomment' });
++        }
++
++        if (isLink) {
++            itemsText.push({ caption: _t.menuOpenLink, event: 'openlink' });
++            if (isEdit && stack.length > 0)
++                itemsText.push({ caption: _t.menuEditLink, event: 'editlink' });
++        }
++
++        // Em telefone, mostra no maximo 2 itens de texto e o resto vai em "Mais".
++        ctx.extraItems = [];
++        if (Device.phone && itemsText.length > 2) {
++            ctx.extraItems = itemsText.splice(2, itemsText.length, { caption: _t.menuMore, event: 'showActionSheet' });
++        }
++
++        return itemsIcon.concat(itemsText);
++    },
++
++    /**
++     * O que: executa as acoes do menu de edicao.
++     * Retorno: true se a acao foi totalmente tratada aqui; false deixa o
++     *          switch do controller (modal de copiar/colar, link, revisao...) agir.
++     */
++    handleMenuItemClick: (ctx, action) => {
++        const api = Common.EditorApi.get();
++        switch (action) {
++            case 'cut': return !!api.Cut();
++            case 'copy': return !!api.Copy();
++            case 'paste': return !!api.Paste();
++            case 'addcomment': Common.Notifications.trigger('addcomment'); return true;
++            case 'merge': api.MergeCells(); return true;
++            case 'split': ctx.showSplitModal(); return true;
++            case 'delete': api.asc_Remove(); return true;
++            case 'deletetable': api.remTable(); return true;
++            case 'edit': setTimeout(() => ctx.props.openOptions('edit'), 400); return true;
++            case 'addlink': setTimeout(() => ctx.props.openOptions('add', 'link'), 400); return true;
++            case 'editlink': setTimeout(() => ctx.props.openOptions('edit-link'), 400); return true;
++            default: return false;
++        }
++    },
+ };
+ 
+ export default EditorUIController;
+diff --git a/apps/presentationeditor/mobile/src/lib/patch.jsx b/apps/presentationeditor/mobile/src/lib/patch.jsx
+index 8674f96..5742198 100644
+--- a/apps/presentationeditor/mobile/src/lib/patch.jsx
++++ b/apps/presentationeditor/mobile/src/lib/patch.jsx
+@@ -31,10 +31,239 @@
+  * Public License v3.
+  *
+  * SPDX-License-Identifier: AGPL-3.0-only
++ *
++ * Modified by Axuz (2026): this file is part of the Axuz patch that re-enables
++ * the mobile editing UI (web-apps-0001-mobile-edit.patch). Original copyright
++ * and license notices above are kept unchanged. Axuz additions are also
++ * licensed under AGPL-3.0-only; see the NOTAS file shipped with the patch.
++ */
++// Modified by Axuz (2026-11-14): edicao mobile religada (web-apps-0001-mobile-edit.patch); ver NOTICE-AXUZ.txt.
++
++/**
++ * Controller de edicao mobile do Presentation Editor (EditorUIController).
++ *
++ * Contexto: no web-apps aberto este modulo e um stub que desliga a edicao
++ * (nenhum "private controller" foi publicado). Esta versao, escrita pela
++ * Axuz, religa a edicao e implementa a interface consumida por Main.jsx,
++ * view/Toolbar.jsx, controller/ContextMenu.jsx e store/focusObjects.js.
++ * Eventos do SDK conforme o cliente desktop (apps/presentationeditor/main).
+  */
++import React, { Fragment } from 'react';
++import { UndoRedoButtons, EditAddButtons } from '../../../../common/mobile/lib/view/EditToolbarButtons';
++import {
++    AddCommentController,
++    EditCommentController
++} from '../../../../common/mobile/lib/controller/collaboration/Comments';
+ 
+ const EditorUIController = () => null;
+ 
+-EditorUIController.isSupportEditFeature = () => false;
++/** O que: build com suporte a edicao. Onde: Main.jsx (permissoes e modo view). */
++EditorUIController.isSupportEditFeature = () => true;
++
++/** O que: Desfazer/Refazer. Onde: view/Toolbar.jsx. */
++EditorUIController.getUndoRedo = (options) => <UndoRedoButtons {...options} />;
++
++/** O que: botoes Editar/Adicionar. Onde: view/Toolbar.jsx. */
++EditorUIController.getToolbarOptions = (options) => <EditAddButtons {...options} />;
++
++/** O que: formularios de comentario (adicionar/editar). Onde: Main.jsx render(). */
++EditorUIController.getEditCommentControllers = () => (
++    <Fragment>
++        <AddCommentController />
++        <EditCommentController />
++    </Fragment>
++);
++
++/** O que: cores de tema do SDK para as paletas. Onde: Main.bindEvents. */
++EditorUIController.initThemeColors = () => {
++    Common.EditorApi.get().asc_registerCallback('asc_onSendThemeColors', (colors, standartColors) => {
++        Common.Utils.ThemeColor.setColors(colors, standartColors);
++    });
++};
++
++/**
++ * O que: eventos de fonte/estilo de caractere -> storeTextSettings.
++ * Onde: Main.bindEvents (alinhamento, listas e cores ja sao do Main).
++ */
++EditorUIController.initFonts = (storeTextSettings) => {
++    const api = Common.EditorApi.get();
++    api.asc_registerCallback('asc_onInitEditorFonts', (fonts, select) => storeTextSettings.initEditorFonts(fonts, select));
++    api.asc_registerCallback('asc_onFontFamily', font => storeTextSettings.resetFontName(font));
++    api.asc_registerCallback('asc_onFontSize', size => storeTextSettings.resetFontSize(size));
++    api.asc_registerCallback('asc_onBold', value => storeTextSettings.resetIsBold(value));
++    api.asc_registerCallback('asc_onItalic', value => storeTextSettings.resetIsItalic(value));
++    api.asc_registerCallback('asc_onUnderline', value => storeTextSettings.resetIsUnderline(value));
++    api.asc_registerCallback('asc_onStrikeout', value => storeTextSettings.resetIsStrikeout(value));
++};
++
++/**
++ * O que: temas, layouts e tema atual do slide -> storeSlideSettings.
++ * Onde: Main.bindEvents; consumido por view/edit/EditSlide.jsx.
++ * Formato dos temas: igual ao cliente desktop (Toolbar._onInitEditorThemes):
++ * temas padrao usam sprite (offsety = indice*40), temas do documento usam imagem.
++ */
++EditorUIController.initEditorStyles = (storeSlideSettings) => {
++    const api = Common.EditorApi.get();
++    storeSlideSettings.addArrayThemes([]);
++    storeSlideSettings.addArrayLayouts([]);
++
++    api.asc_registerCallback('asc_onInitEditorStyles', themes => {
++        if (!themes) return;
++        const defaults = themes[0] || [], docThemes = themes[1] || [];
++        const list = defaults.map((theme, index) => ({
++            themeId: theme.get_Index(),
++            offsety: index * 40
++        }));
++        docThemes.forEach(theme => list.push({
++            themeId: theme.get_Index(),
++            imageUrl: theme.get_Image(),
++            offsety: 0
++        }));
++        storeSlideSettings.addArrayThemes(list);
++    });
++    api.asc_registerCallback('asc_onUpdateLayout', layouts => storeSlideSettings.addArrayLayouts(layouts || []));
++    api.asc_registerCallback('asc_onUpdateThemeIndex', index => storeSlideSettings.changeSlideThemeIndex(index));
++};
++
++/** O que: templates de tabela. Onde: Main.bindEvents; storeTableSettings. */
++EditorUIController.initTableTemplates = (storeTableSettings) => {
++    Common.EditorApi.get().asc_registerCallback('asc_onInitTableTemplates', templates => storeTableSettings.initTableTemplates(templates));
++};
++
++/** O que: previews de estilo de grafico. Onde: Main.bindEvents. */
++EditorUIController.updateChartStyles = (storeChartSettings, storeFocusObjects) => {
++    const api = Common.EditorApi.get();
++    api.asc_registerCallback('asc_onUpdateChartStyles', () => {
++        const chart = storeFocusObjects.chartObject;
++        if (chart && chart.get_ChartProperties()) {
++            storeChartSettings.updateChartStyles(api.asc_getChartPreviews(chart.get_ChartProperties().getType()));
++        }
++    });
++};
++
++/**
++ * O que: ObjectValue do ULTIMO (topo) elemento do foco do tipo pedido.
++ * Onde: helper de initFocusObjects.
++ */
++const topValue = (objects, type) => {
++    let found;
++    for (const object of objects) {
++        if (object.get_ObjectType() === type) found = object;
++    }
++    return found ? found.get_ObjectValue() : undefined;
++};
++
++/**
++ * O que: instala storeFocusObjects.intf (filtro de abas + getters por tipo) e
++ *        assina asc_onFocusObject. No PE, Shape/Chart/Image/Slide sao tipos
++ *        de elemento proprios (diferente do DE).
++ * Onde: Main.bindEvents.
++ */
++EditorUIController.initFocusObjects = (storeFocusObjects) => {
++    const T = () => Asc.c_oAscTypeSelectElement;
++    const objs = () => storeFocusObjects._focusObjects || [];
++
++    storeFocusObjects.intf = {
++        filterFocusObjects: () => {
++            const names = new Map([
++                [T().Slide, 'slide'], [T().Paragraph, 'text'], [T().Image, 'image'], [T().Shape, 'shape'],
++                [T().Chart, 'chart'], [T().Table, 'table'], [T().Hyperlink, 'hyperlink']
++            ]);
++            const settings = [];
++            for (const object of objs()) {
++                const name = names.get(object.get_ObjectType());
++                if (name && settings.indexOf(name) < 0) settings.push(name);
++            }
++            return settings;
++        },
++        getSlideObject: () => topValue(objs(), T().Slide),
++        getParagraphObject: () => topValue(objs(), T().Paragraph),
++        getShapeObject: () => topValue(objs(), T().Shape),
++        getImageObject: () => topValue(objs(), T().Image),
++        getTableObject: () => topValue(objs(), T().Table),
++        getChartObject: () => topValue(objs(), T().Chart),
++        getLinkObject: () => topValue(objs(), T().Hyperlink),
++    };
++
++    Common.EditorApi.get().asc_registerCallback('asc_onFocusObject', objects => storeFocusObjects.resetFocusObjects(objects));
++};
++
++/**
++ * O que: menu de contexto de edicao do PE.
++ * Onde: controller/ContextMenu.jsx; `ctx` = instancia do controller.
++ */
++EditorUIController.ContextMenu = {
++    mapMenuItems: (ctx) => {
++        const { t, canViewComments, canCoAuthoring, canComments, isDisconnected, isVersionHistoryMode } = ctx.props;
++        const _t = t("ContextMenu", { returnObjects: true });
++        const api = Common.EditorApi.get();
++        const T = Asc.c_oAscTypeSelectElement;
++        const stack = api.getSelectedElements();
++        const canCopy = api.can_CopyCut();
++        const itemsIcon = [], itemsText = [];
++
++        let isObject = false, isTable = false, isChart = false, isLink = false, locked = false;
++        stack.forEach(item => {
++            const type = item.get_ObjectType(), value = item.get_ObjectValue();
++            if (value && typeof value.get_Locked === 'function' && value.get_Locked()) locked = true;
++            if (type === T.Table) isTable = true;
++            if (type === T.Chart) isChart = true;
++            if (type === T.Hyperlink) isLink = true;
++            if ([T.Paragraph, T.Image, T.Chart, T.Shape, T.Table].indexOf(type) > -1) isObject = true;
++        });
++
++        if (isDisconnected || isVersionHistoryMode) return itemsIcon;
++
++        if (canCopy && isObject) {
++            itemsIcon.push({ event: 'copy', icon: 'icon-copy' });
++            if (!locked) {
++                itemsIcon.unshift({ event: 'cut', icon: 'icon-cut' });
++            }
++        }
++        if (!locked && stack.length > 0) itemsIcon.push({ event: 'paste', icon: 'icon-paste' });
++
++        if (isTable && !locked && api.CheckBeforeMergeCells && api.CheckBeforeMergeCells())
++            itemsText.push({ caption: _t.menuMerge, event: 'merge' });
++        if (isTable && !locked && api.CheckBeforeSplitCells && api.CheckBeforeSplitCells())
++            itemsText.push({ caption: _t.menuSplit, event: 'split' });
++        if (isObject && !locked) itemsText.push({ caption: _t.menuDelete, event: 'delete' });
++        if (isTable && !locked) itemsText.push({ caption: _t.menuDeleteTable, event: 'deletetable' });
++        if (!locked && stack.length > 0) itemsText.push({ caption: _t.menuEdit, event: 'edit' });
++        if (!!api.can_AddHyperlink() && !locked) itemsText.push({ caption: _t.menuAddLink, event: 'addlink' });
++
++        if (canViewComments && ctx.isComments)
++            itemsText.push({ caption: _t.menuViewComment, event: 'viewcomment' });
++        if (!isChart && api.can_AddQuotedComment() !== false && canCoAuthoring && canComments && !locked)
++            itemsText.push({ caption: _t.menuAddComment, event: 'addcomment' });
++
++        if (isLink) {
++            itemsText.push({ caption: _t.menuOpenLink, event: 'openlink' });
++            itemsText.push({ caption: _t.menuEditLink, event: 'editlink' });
++        }
++        return itemsIcon.concat(itemsText);
++    },
++
++    /**
++     * O que: executa acoes do menu de edicao. Retorna true se tratou; false
++     * deixa o switch do controller (aviso de copiar/colar, link, comentarios) agir.
++     */
++    handleMenuItemClick: (ctx, action) => {
++        const api = Common.EditorApi.get();
++        switch (action) {
++            case 'cut': return !!api.Cut();
++            case 'copy': return !!api.Copy();
++            case 'paste': return !!api.Paste();
++            case 'addcomment': Common.Notifications.trigger('addcomment'); return true;
++            case 'merge': api.MergeCells(); return true;
++            case 'split': ctx.showSplitModal(); return true;
++            case 'delete': api.asc_Remove(); return true;
++            case 'deletetable': api.remTable(); return true;
++            case 'edit': setTimeout(() => ctx.props.openOptions('edit'), 400); return true;
++            case 'addlink': setTimeout(() => ctx.props.openOptions('add-link'), 400); return true;
++            case 'editlink': setTimeout(() => ctx.props.openOptions('edit-link'), 400); return true;
++            default: return false;
++        }
++    },
++};
+ 
+ export default EditorUIController;
+diff --git a/apps/spreadsheeteditor/mobile/src/lib/patch.jsx b/apps/spreadsheeteditor/mobile/src/lib/patch.jsx
+index 8674f96..1f65f2f 100644
+--- a/apps/spreadsheeteditor/mobile/src/lib/patch.jsx
++++ b/apps/spreadsheeteditor/mobile/src/lib/patch.jsx
+@@ -31,10 +31,298 @@
+  * Public License v3.
+  *
+  * SPDX-License-Identifier: AGPL-3.0-only
++ *
++ * Modified by Axuz (2026): this file is part of the Axuz patch that re-enables
++ * the mobile editing UI (web-apps-0001-mobile-edit.patch). Original copyright
++ * and license notices above are kept unchanged. Axuz additions are also
++ * licensed under AGPL-3.0-only; see the NOTAS file shipped with the patch.
+  */
++// Modified by Axuz (2026-11-14): edicao mobile religada (web-apps-0001-mobile-edit.patch); ver NOTICE-AXUZ.txt.
++
++/**
++ * Controller de edicao mobile do Spreadsheet Editor (EditorUIController).
++ *
++ * Contexto: no web-apps aberto este modulo e um stub que desliga a edicao.
++ * Esta versao, escrita pela Axuz, religa a edicao. A logica de selecao/foco
++ * (initCellInfo, getSelections) segue o codigo que existia no proprio
++ * repositorio AGPL antes do commit 7c72e8cb1b ("[SSE mobile] Changes for code
++ * decomposition"), adaptado aos stores atuais. Interface consumida por
++ * Main.jsx, view/Toolbar.jsx, controller/ContextMenu.jsx e store/focusObjects.js.
++ */
++import React from 'react';
++import { UndoRedoButtons, EditAddButtons } from '../../../../common/mobile/lib/view/EditToolbarButtons';
+ 
+ const EditorUIController = () => null;
+ 
+-EditorUIController.isSupportEditFeature = () => false;
++/** O que: build com suporte a edicao. Onde: Main.jsx (permissoes e modo view). */
++EditorUIController.isSupportEditFeature = () => true;
++
++/**
++ * O que: botoes da barra (note a forma diferente dos outros editores: o
++ *        Toolbar do SSE usa EditorUIController.toolbarOptions.*).
++ * Onde: view/Toolbar.jsx.
++ */
++EditorUIController.toolbarOptions = {
++    getUndoRedo: (options) => <UndoRedoButtons {...options} />,
++
++    /**
++     * options = {disabledEdit, disabledAdd, wsProps, focusOn, isShapeLocked, onEditClick, onAddClick}.
++     * Com a planilha protegida e um objeto travado em foco, Editar fica desabilitado.
++     */
++    getEditOptions: ({ wsProps, focusOn, isShapeLocked, ...options }) => {
++        const objectProtected = !!(wsProps && wsProps.Objects) && focusOn === 'obj' && !!isShapeLocked;
++        return <EditAddButtons {...options} disabledEdit={options.disabledEdit || objectProtected} />;
++    },
++};
++
++/** O que: cores de tema do SDK para as paletas. Onde: Main.bindEvents. */
++EditorUIController.initThemeColors = () => {
++    Common.EditorApi.get().asc_registerCallback('asc_onSendThemeColors', (colors, standartColors) => {
++        Common.Utils.ThemeColor.setColors(colors, standartColors);
++    });
++};
++
++/** O que: estilos de celula (miniaturas). Onde: Main.bindEvents; storeCellSettings. */
++EditorUIController.initEditorStyles = (storeCellSettings) => {
++    Common.EditorApi.get().asc_registerCallback('asc_onInitEditorStyles', styles => storeCellSettings.initCellStyles(styles));
++};
++
++/**
++ * O que: fontes e fonte do editor de celula.
++ * Onde: Main.bindEvents(props); props = todos os stores injetados no Main.
++ */
++EditorUIController.initFonts = (props) => {
++    const api = Common.EditorApi.get();
++    const { storeCellSettings, storeTextSettings } = props;
++    api.asc_registerCallback('asc_onInitEditorFonts', (fonts, select) => {
++        storeCellSettings.initEditorFonts(fonts, select);
++        storeTextSettings.initEditorFonts(fonts, select);
++    });
++    api.asc_registerCallback('asc_onEditorSelectionChanged', fontObj => {
++        storeCellSettings.initFontInfo(fontObj);
++        storeTextSettings.initFontInfo(fontObj);
++    });
++};
++
++/**
++ * O que: pega o ObjectValue do ULTIMO elemento do foco que satisfaz o predicado.
++ * Onde: helper de initCellInfo.
++ */
++const topValue = (objects, predicate) => {
++    let found;
++    for (const object of objects) {
++        if (predicate(object)) found = object;
++    }
++    return found ? found.get_ObjectValue() : undefined;
++};
++
++/**
++ * O que: calcula a lista de "selecoes" (cell/shape/image/chart/text/hyperlink)
++ *        a partir do cellInfo e dos objetos graficos. Alimenta as abas de Editar.
++ * Onde: storeFocusObjects.intf.getSelections (computed `selections`).
++ * Origem: logica do repositorio AGPL (commit 7c72e8cb1b^), com nomes asc_*.
++ */
++const computeSelections = (cellInfo) => {
++    const selections = [];
++    if (!cellInfo) return selections;
++    const S = Asc.c_oAscSelectionType;
++    let isImage, isChart, isTextShape, isShape, isTextChart;
++
++    switch (cellInfo.asc_getSelectionType()) {
++        case S.RangeImage: isImage = true; break;
++        case S.RangeShape: isShape = true; break;
++        case S.RangeChart: isChart = true; break;
++        case S.RangeChartText: isTextChart = true; break;
++        case S.RangeShapeText: isTextShape = true; break;
++    }
++
++    if (isImage || isShape || isChart) {
++        isImage = isShape = isChart = false;
++        const selected = Common.EditorApi.get().asc_getGraphicObjectProps() || [];
++        for (const object of selected) {
++            if (object.asc_getObjectType() !== Asc.c_oAscTypeSelectElement.Image) continue;
++            const value = object.asc_getObjectValue();
++            const shapeProps = value.asc_getShapeProperties();
++            if (shapeProps) {
++                if (shapeProps.asc_getFromChart()) isChart = true; else isShape = true;
++            } else if (value.asc_getChartProperties()) {
++                isChart = true;
++            } else {
++                isImage = true;
++            }
++        }
++    }
++
++    if (isChart || isTextChart) {
++        selections.push('chart');
++        if (isTextChart) selections.push('text');
++    } else if ((isShape || isTextShape) && !isImage) {
++        selections.push('shape');
++        if (isTextShape) selections.push('text');
++    } else if (isImage) {
++        selections.push('image');
++        if (isShape) selections.push('shape');
++    } else {
++        selections.push('cell');
++        if (cellInfo.asc_getHyperlink()) selections.push('hyperlink');
++    }
++    return selections;
++};
++
++/**
++ * O que: assina asc_onSelectionChanged e mantem stores de foco/celula/texto/
++ *        grafico atualizados; instala storeFocusObjects.intf (getters).
++ * Onde: Main.bindEvents(props).
++ */
++EditorUIController.initCellInfo = (props) => {
++    const api = Common.EditorApi.get();
++    const { storeFocusObjects, storeCellSettings, storeTextSettings, storeChartSettings } = props;
++    const T = Asc.c_oAscTypeSelectElement;
++    const objs = () => storeFocusObjects._focusObjects || [];
++
++    storeFocusObjects.intf = {
++        getSelections: () => computeSelections(storeFocusObjects._cellInfo),
++        getShapeObject: () => topValue(objs(), o => o.get_ObjectType() === T.Image && !!o.get_ObjectValue() && !!o.get_ObjectValue().get_ShapeProperties()),
++        getImageObject: () => topValue(objs(), o => o.get_ObjectType() === T.Image),
++        getChartObject: () => topValue(objs(), o => o.get_ObjectType() === T.Image && !!o.get_ObjectValue() && !!o.get_ObjectValue().get_ChartProperties()),
++        getTableObject: () => topValue(objs(), o => o.get_ObjectType() === T.Table),
++        getParagraphObject: () => topValue(objs(), o => o.get_ObjectType() === T.Paragraph),
++    };
++
++    api.asc_registerCallback('asc_onSelectionChanged', cellInfo => {
++        storeFocusObjects.resetCellInfo(cellInfo);
++        storeCellSettings.initCellSettings(cellInfo);
++        storeTextSettings.initTextSettings(cellInfo);
++        storeFocusObjects.setIsLocked(cellInfo);
++
++        const S = Asc.c_oAscSelectionType;
++        const isObj = [S.RangeImage, S.RangeShape, S.RangeChart, S.RangeChartText, S.RangeShapeText]
++            .indexOf(cellInfo.asc_getSelectionType()) > -1;
++        storeFocusObjects.changeFocus(isObj);
++        storeFocusObjects.resetFocusObjects(isObj ? (api.asc_getGraphicObjectProps() || []) : []);
++
++        const chart = storeFocusObjects.chartObject;
++        if (chart && chart.get_ChartProperties()) {
++            storeChartSettings.updateChartStyles(api.asc_getChartPreviews(chart.get_ChartProperties().getType()));
++        }
++    });
++};
++
++/**
++ * O que: menu de contexto de edicao da planilha (celula, linha/coluna, objetos).
++ * Onde: controller/ContextMenu.jsx; `ctx` = instancia do controller.
++ *       Itens de link ("Abrir link") e a reorganizacao em "Mais" sao feitos pelo
++ *       proprio controller (sortMenuItems).
++ */
++EditorUIController.ContextMenu = {
++    mapMenuItems: (ctx) => {
++        const { t, isDisconnected, isVersionHistoryMode, canViewComments, canCoAuthoring, canComments } = ctx.props;
++        const _t = t("ContextMenu", { returnObjects: true });
++        const api = Common.EditorApi.get();
++        const info = api.asc_getCellInfo();
++        const S = Asc.c_oAscSelectionType;
++        const seltype = info.asc_getSelectionType();
++        const isMultiselect = !!api.asc_getActiveRangeStr(Asc.referenceType.A, null, null, true);
++        const locked = info.asc_getLocked() === true;
++        const itemsIcon = [], itemsText = [];
++
++        const isCell = seltype === S.RangeCells;
++        const isRow = seltype === S.RangeRow, isCol = seltype === S.RangeCol, isAll = seltype === S.RangeMax;
++        const isObject = [S.RangeImage, S.RangeShape, S.RangeChart, S.RangeChartText, S.RangeShapeText].indexOf(seltype) > -1;
++
++        if (isDisconnected || isVersionHistoryMode) {
++            itemsIcon.push({ event: 'copy', icon: 'icon-copy' });
++            return itemsIcon;
++        }
++
++        // Area de transferencia
++        if (!locked) itemsIcon.push({ event: 'cut', icon: 'icon-cut' });
++        itemsIcon.push({ event: 'copy', icon: 'icon-copy' });
++        if (!locked) itemsIcon.push({ event: 'paste', icon: 'icon-paste' });
++        // Ordem na UI: Cortar, Copiar, Colar.
++
++        if (isMultiselect) return itemsIcon;
++
++        if (isCell) {
++            if (!locked) {
++                itemsText.push({ caption: _t.menuCell, event: 'edit' });
++                const xfs = info.asc_getXfs();
++                itemsText.push(xfs && xfs.asc_getWrapText()
++                    ? { caption: _t.menuUnwrap, event: 'unwrap' }
++                    : { caption: _t.menuWrap, event: 'wrap' });
++                itemsText.push(info.asc_getMerge() === Asc.c_oAscMergeOptions.Merge
++                    ? { caption: _t.menuUnmerge, event: 'unmerge' }
++                    : { caption: _t.menuMerge, event: 'merge' });
++                itemsText.push({ caption: _t.menuDelete, event: 'delete' });
++                if (!!info.asc_getHyperlink()) itemsText.push({ caption: _t.menuEditLink, event: 'editlink' });
++                else itemsText.push({ caption: _t.menuAddLink, event: 'addlink' });
++            }
++            const frozen = api.asc_getSheetViewSettings().asc_getIsFreezePane();
++            itemsText.push(frozen
++                ? { caption: _t.menuUnfreezePanes, event: 'unfreeze' }
++                : { caption: _t.menuFreezePanes, event: 'freeze' });
++            if (api.asc_canFillHandle()) itemsText.push({ caption: _t.menuAutofill, event: 'autofillCells' });
++        } else if (isRow || isCol) {
++            if (!locked) {
++                itemsText.push({ caption: _t.menuEdit, event: 'edit' });
++                itemsText.push({ caption: isRow ? _t.menuAddRow : _t.menuAddColumn, event: isRow ? 'addrow' : 'addcol' });
++                itemsText.push({ caption: isRow ? _t.menuDeleteRow : _t.menuDeleteColumn, event: isRow ? 'delrow' : 'delcol' });
++                itemsText.push({ caption: _t.menuHide, event: 'hide' });
++                itemsText.push({ caption: _t.menuDelete, event: 'delete' });
++            }
++        } else if (isAll) {
++            if (!locked) itemsText.push({ caption: _t.menuEdit, event: 'edit' });
++        } else if (isObject && !locked) {
++            itemsText.push({ caption: _t.menuEdit, event: 'edit' });
++            itemsText.push({ caption: _t.menuDelete, event: 'deleteobject' });
++        }
++
++        // Comentarios (somente celulas)
++        if (isCell) {
++            const comments = info.asc_getComments();
++            if (canViewComments && comments && comments.length)
++                itemsText.push({ caption: _t.menuViewComment, event: 'viewcomment' });
++            else if (canCoAuthoring && canComments && !locked && comments && comments.length < 1)
++                itemsText.push({ caption: _t.menuAddComment, event: 'addcomment' });
++        }
++
++        ctx.extraItems = [];
++        return itemsIcon.concat(itemsText);
++    },
++
++    /**
++     * O que: executa as acoes do menu de edicao. Retorna true se tratou; false
++     * deixa o switch do controller (aviso de copiar/colar, link, autofill...) agir.
++     */
++    handleMenuItemClick: (ctx, action) => {
++        const api = Common.EditorApi.get();
++        const openOptions = (opts) => setTimeout(() => ctx.props.openOptions(opts), 400);
++        switch (action) {
++            case 'cut': return !!api.asc_Cut();
++            case 'copy': return !!api.asc_Copy();
++            case 'paste': return !!api.asc_Paste();
++            case 'edit': openOptions('edit'); return true;
++            case 'wrap': api.asc_setCellTextWrap(true); return true;
++            case 'unwrap': api.asc_setCellTextWrap(false); return true;
++            case 'merge': ctx.onMergeCells(); return true;
++            case 'unmerge': api.asc_mergeCells(Asc.c_oAscMergeOptions.None); return true;
++            case 'delete': api.asc_emptyCells(Asc.c_oAscCleanOptions.Text); return true;
++            case 'deleteobject': api.asc_Remove(); return true;
++            case 'addrow': api.asc_insertCells(Asc.c_oAscInsertOptions.InsertRows); return true;
++            case 'addcol': api.asc_insertCells(Asc.c_oAscInsertOptions.InsertColumns); return true;
++            case 'delrow': api.asc_deleteCells(Asc.c_oAscDeleteOptions.DeleteRows); return true;
++            case 'delcol': api.asc_deleteCells(Asc.c_oAscDeleteOptions.DeleteColumns); return true;
++            case 'hide':
++                api[api.asc_getCellInfo().asc_getSelectionType() === Asc.c_oAscSelectionType.RangeRow ? 'asc_hideRows' : 'asc_hideColumns']();
++                return true;
++            case 'freeze':
++            case 'unfreeze': api.asc_freezePane(); return true;
++            case 'addlink': openOptions('add-link'); return true;
++            case 'editlink': openOptions('edit-link'); return true;
++            case 'addcomment': Common.Notifications.trigger('addcomment'); return true;
++            default: return false;
++        }
++    },
++};
+ 
+ export default EditorUIController;

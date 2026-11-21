@@ -1,0 +1,8 @@
+main.cpp (extraido em build da HISTORIA do core, sha256 377045b1...; nao versionado aqui por falso positivo do gitleaks da casa) e src/opensslconf.h (versionado): copiados de ONLYOFFICE/core, commit 47e72c221075ec3fc750543c150dc901ce8956ab
+(2021-11-12, "Rename module & fix bugs"), caminhos DesktopEditor/xmlsec/src/wasm/module/hash/{main.cpp,openssl/opensslconf.h}.
+Sao o fonte exato do engine.wasm versionado no sdkjs (commit 1dbcc65201 do sdkjs, 2021-11-12); os scripts de build upstream
+(hash/make.py) foram removidos do core em 2da2866862 / b77b3dc7e2 (2026-05). Licenca: AGPL-3.0 (core).
+Por que o fonte de 2021 e nao o de 2026: o main.cpp novo inclui doctrenderer/hash.cpp (CHash com std::function) e muda os
+nomes minificados de import/export do wasm (c->d, +1 import); o glue engine.js do sdkjs depende desses nomes. Com o fonte de
+2021 e emsdk 2.0.32 o resultado e byte-identico ao binario versionado.
+OpenSSL: OpenSSL_1_1_1f, HEAD do checkout pinado do core (blobs.lock id 3p-openssl-openssl).

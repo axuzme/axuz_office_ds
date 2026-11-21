@@ -1,0 +1,5 @@
+# axuz_ops/office/smoke/Dockerfile.test — imagem de TESTE do Document Server (nao e artefato de entrega).
+# O QUE: a mesma imagem de build (ubuntu 24.04 por digest + apt do snapshot) + iptables para o teste de egress.
+#   Traz libvips (runtime do sharp compilado contra a libvips da distro) e as libs de runtime do DS.
+FROM axuz-office-builder:snapshot
+RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends iptables iproute2 curl ca-certificates fontconfig libcurl4 util-linux libvips42t64 >/dev/null && rm -rf /var/lib/apt/lists/*

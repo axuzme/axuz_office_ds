@@ -1,0 +1,22 @@
+diff --git a/build/Gruntfile.js b/build/Gruntfile.js
+index 51cf4dc..316c1e1 100644
+--- a/build/Gruntfile.js
++++ b/build/Gruntfile.js
+@@ -148,7 +148,16 @@ module.exports = function(grunt) {
+     grunt.loadNpmTasks('grunt-contrib-less');
+     grunt.loadNpmTasks('grunt-contrib-requirejs');
+     grunt.loadNpmTasks('grunt-contrib-concat');
+-    grunt.loadNpmTasks('grunt-contrib-imagemin');
++    // Modified by Axuz (2026-11-14): sem otimizacao de imagem. grunt-contrib-imagemin usa gifsicle/jpegtran/optipng,
++    // binarios pre-compilados baixados no postinstall (blob de terceiro). A tarefa `imagemin` vira copia fiel.
++    grunt.registerMultiTask('imagemin', 'Axuz: copia imagens sem otimizar', function () {
++        this.files.forEach(function (f) {
++            f.src.forEach(function (src) {
++                if (grunt.file.isDir(src)) return;
++                grunt.file.copy(src, f.dest, {encoding: null});
++            });
++        });
++    });
+     grunt.loadNpmTasks('grunt-contrib-cssmin');
+     grunt.loadNpmTasks('grunt-contrib-htmlmin');
+     grunt.loadNpmTasks('grunt-json-minify');

@@ -1,0 +1,7 @@
+# office/wasm/drawingfile/emsdk.lock — toolchain do drawingfile.wasm (fixada por digest; nada flutua).
+#
+# O upstream fixa o emsdk no commit f677ef9 (Common/js/make.py do core, removido em b77b3dc7e2) e roda `emsdk install latest`,
+# o que resolve para emscripten 3.1.48 (emscripten-releases-tags.json daquele commit: "latest": "3.1.48"). A glue distribuida no
+# sdkjs confere (wasmExports, ExceptionInfo ptr=excPtr-24, __emscripten_throw_longjmp). Usamos a imagem oficial 3.1.48.
+EMSDK_VERSION=3.1.48
+EMSDK_IMAGE=emscripten/emsdk@sha256:c952f592577a428698cb990c9656f395ae34424740f9c40bed4c3ee6d4850d29

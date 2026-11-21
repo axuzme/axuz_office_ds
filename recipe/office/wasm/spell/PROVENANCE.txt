@@ -1,0 +1,7 @@
+src/{base.cpp,base.h,engine.h,filemgr_wrapper_new.cxx,string_buffer_stream.h}: ONLYOFFICE/core commit
+aefa5038b51944b9467786a524b502fa22b5355f (2021-05-19, "Fix bug 50471 Fix crash in wasm module"), caminho
+Common/3dParty/hunspell/wasm/src/. E o fonte do spell.wasm versionado no sdkjs (commit 8acfe8a21e, 2021-05-21).
+Os scripts upstream (make.py/hunspell.json/before.py) foram removidos do core em 2da2866862 (2026-05-12); os flags e
+os 3 patches do before.py foram reproduzidos em inner.sh. Hunspell: commit 4ddd8ed5ca6484b930b111aec50c2750a6119a0f
+(conteudo do arquivo HEAD do core em 2021-05), extraido da historia do repo hunspell do checkout pinado do core
+(blobs.lock id 3p-hunspell-hunspell, HEAD 8a2fdfe5 e descendente). Licencas: AGPL-3.0 (core) e MPL/LGPL/GPL (hunspell).

@@ -1,0 +1,15 @@
+# axuz_ops/office/Dockerfile.sysroot — sysroot Ubuntu 16.04 (xenial) reconstruido do archive oficial.
+#
+# O QUE: substitui o `ubuntu16-amd64-sysroot.tar.gz` opaco do ONLYOFFICE-data (sha256 d74cfd1b...). Parte da imagem
+#   oficial ubuntu:16.04 FIXADA POR DIGEST e instala, de archive.ubuntu.com (apt verifica a assinatura GPG do Release),
+#   exatamente os pacotes=versoes de sysroot-packages.txt (extraidos do sysroot antigo). xenial esta congelado (EOL),
+#   entao pacote=versao e imutavel; o sha256 do Release e conferido em blobs.lock (id ubuntu-xenial-release).
+# ONDE: stages/10-sysroot.sh (docker build) -> export do rootfs em tools/linux/sysroot/ubuntu16-amd64-sysroot.
+#   O mesmo rootfs roda o stage do Qt (gcc-5 nativo).
+FROM ubuntu@sha256:1f1a2d56de1d604801a9671f301190704c25d604a416f59e03c04f5c6ffee0d6
+COPY sysroot-packages.txt /tmp/sysroot-packages.txt
+RUN set -eux; \
+    printf 'deb http://archive.ubuntu.com/ubuntu xenial main universe\ndeb http://archive.ubuntu.com/ubuntu xenial-updates main universe\ndeb http://archive.ubuntu.com/ubuntu xenial-security main universe\n' > /etc/apt/sources.list; \
+    apt-get update -qq; \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends --allow-downgrades $(tr '\n' ' ' < /tmp/sysroot-packages.txt); \
+    rm -rf /var/lib/apt/lists/* /tmp/sysroot-packages.txt

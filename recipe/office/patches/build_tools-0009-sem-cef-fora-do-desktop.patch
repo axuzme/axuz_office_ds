@@ -1,0 +1,14 @@
+diff --git a/scripts/core_common/make_common.py b/scripts/core_common/make_common.py
+--- a/scripts/core_common/make_common.py
++++ b/scripts/core_common/make_common.py
+@@ -43,7 +43,9 @@
+ 
+   boost.make()
+   libxml2.make()
+-  cef.make()
++  # AXUZ: o CEF (cef_binary.7z opaco) so serve ao desktop editors; o Document Server nao o usa
++  if config.check_option("module", "desktop"):
++    cef.make()
+   icu.make()
+   openssl.make()
+   v8.make()

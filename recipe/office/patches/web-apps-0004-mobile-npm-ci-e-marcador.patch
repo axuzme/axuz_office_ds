@@ -1,0 +1,47 @@
+diff --git a/apps/documenteditor/mobile/src/lib/patch.jsx b/apps/documenteditor/mobile/src/lib/patch.jsx
+--- a/apps/documenteditor/mobile/src/lib/patch.jsx
++++ b/apps/documenteditor/mobile/src/lib/patch.jsx
+@@ -337,4 +337,7 @@
+     },
+ };
+ 
++// Modified by Axuz: marcador que sobrevive a minificacao; o gate (check-no-blob + teste) o exige no bundle mobile do artefato.
++window.AXUZ_MOBILE_EDIT = 'axuz-mobile-edit-v1';
++
+ export default EditorUIController;
+diff --git a/apps/presentationeditor/mobile/src/lib/patch.jsx b/apps/presentationeditor/mobile/src/lib/patch.jsx
+--- a/apps/presentationeditor/mobile/src/lib/patch.jsx
++++ b/apps/presentationeditor/mobile/src/lib/patch.jsx
+@@ -266,4 +266,7 @@
+     },
+ };
+ 
++// Modified by Axuz: marcador que sobrevive a minificacao; o gate (check-no-blob + teste) o exige no bundle mobile do artefato.
++window.AXUZ_MOBILE_EDIT = 'axuz-mobile-edit-v1';
++
+ export default EditorUIController;
+diff --git a/apps/spreadsheeteditor/mobile/src/lib/patch.jsx b/apps/spreadsheeteditor/mobile/src/lib/patch.jsx
+--- a/apps/spreadsheeteditor/mobile/src/lib/patch.jsx
++++ b/apps/spreadsheeteditor/mobile/src/lib/patch.jsx
+@@ -325,4 +325,7 @@
+     },
+ };
+ 
++// Modified by Axuz: marcador que sobrevive a minificacao; o gate (check-no-blob + teste) o exige no bundle mobile do artefato.
++window.AXUZ_MOBILE_EDIT = 'axuz-mobile-edit-v1';
++
+ export default EditorUIController;
+diff --git a/build/Gruntfile.js b/build/Gruntfile.js
+--- a/build/Gruntfile.js
++++ b/build/Gruntfile.js
+@@ -708,7 +708,9 @@
+                     options: {
+                         cwd: '../vendor/framework7-react',
+                     },
+-                    cmd: 'npm i --include=dev --production=false',
++                    // Modified by Axuz (2026-11-16): install estrito pelo lockfile (npm-shrinkwrap.json) e sem scripts de instalacao;
++                    // `npm i` aceitaria drift de versao e rodaria postinstall que baixa binario.
++                    cmd: 'npm ci --include=dev --ignore-scripts --no-audit --no-fund',
+                 },
+             }
+         });

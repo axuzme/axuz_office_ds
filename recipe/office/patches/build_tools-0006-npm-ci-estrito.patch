@@ -1,0 +1,22 @@
+diff --git a/scripts/build_js.py b/scripts/build_js.py
+index efb1612..b92d217 100644
+--- a/scripts/build_js.py
++++ b/scripts/build_js.py
+@@ -105,13 +105,12 @@ def make():
+ 
+ # JS build
+ def _run_npm(directory):
+-  retValue = base.cmd_in_dir(directory, "npm", ["install"], True)
+-  if (0 != retValue):
+-    retValue = base.cmd_in_dir(directory, "npm", ["install", "--verbose"])
+-  return retValue
++  # AXUZ: `npm install` aceitaria drift do lockfile e roda scripts de instalacao que baixam binarios
++  # (gifsicle/jpegtran/optipng/phantomjs). `npm ci --ignore-scripts` valida a integridade sha512 do lock.
++  return base.cmd_in_dir(directory, "npm", ["ci", "--ignore-scripts", "--no-audit", "--no-fund"])
+ 
+ def _run_npm_ci(directory):
+-  return base.cmd_in_dir(directory, "npm", ["ci"])
++  return base.cmd_in_dir(directory, "npm", ["ci", "--ignore-scripts", "--no-audit", "--no-fund"])
+ 
+ def _run_grunt(directory, params=[]):
+   return base.cmd_in_dir(directory, "grunt", params)

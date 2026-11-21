@@ -1,0 +1,3 @@
+# office/wasm/libheif/emsdk.lock — toolchain do libheif-bundle.js (wasm embutido). Imagem oficial emscripten por digest (a mesma do drawingfile).
+EMSDK_VERSION=3.1.48
+EMSDK_IMAGE=emscripten/emsdk@sha256:c952f592577a428698cb990c9656f395ae34424740f9c40bed4c3ee6d4850d29

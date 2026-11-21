@@ -1,0 +1,4 @@
+# emsdk fixado por DIGEST: emscripten 2.0.15. Calibrado em 2026-11-15 contra o spell.wasm do sdkjs (510644 bytes, 2021-05-21):
+# com o mesmo fonte (core aefa5038b5 + hunspell 4ddd8ed5) 2.0.15 da 510647 bytes e 2.0.14 da 510634 (2.0.16-2.0.20: 506-509 mil);
+# nao e byte-identico (3 bytes), mas tem as MESMAS tabelas de import/export minificadas; equivalencia provada por spell/test.sh.
+emscripten/emsdk@sha256:70e616e4db662d4fd3345b3495e8534f8be99bebbc668a885dda42b476cadffe

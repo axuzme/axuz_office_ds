@@ -1,0 +1,16 @@
+diff --git a/apps/documenteditor/mobile/src/controller/Main.jsx b/apps/documenteditor/mobile/src/controller/Main.jsx
+index 0adf26973c..3ac1aee0c7 100644
+--- a/apps/documenteditor/mobile/src/controller/Main.jsx
++++ b/apps/documenteditor/mobile/src/controller/Main.jsx
+@@ -1207,8 +1207,9 @@ class MainController extends Component {
+                 storeAppOptions.canComments && this.api.asc_setRestriction(Asc.c_oAscRestrictionType.OnlyComments);
+                 storeAppOptions.canFillForms && this.api.asc_setRestriction(Asc.c_oAscRestrictionType.OnlyForms);
+             } else {
+-                // this.api.asc_setRestriction(Asc.c_oAscRestrictionType.None);
+-                this.api.asc_setRestriction(Asc.c_oAscRestrictionType.View);
++                // Modified by Axuz: with customization.mobile.forceView === false the document must stay editable
++                // (upstream always re-applies the View restriction here, assuming the forced reader mode).
++                this.api.asc_setRestriction(storeAppOptions.isViewer ? Asc.c_oAscRestrictionType.View : Asc.c_oAscRestrictionType.None);
+             }
+         }
+     };

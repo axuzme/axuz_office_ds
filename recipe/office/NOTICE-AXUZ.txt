@@ -1,0 +1,40 @@
+AVISO DE MODIFICACAO — ONLYOFFICE Docs Community Edition (Document Server) modificado por Axuz
+==========================================================================================
+
+Este artefato e derivado do ONLYOFFICE Docs Community Edition, de Ascensio System SIA, licenciado sob a GNU Affero
+General Public License versao 3 (AGPL-3.0) com os termos adicionais do arquivo LICENSE do projeto (server/LICENSE.txt).
+Os avisos de copyright e de licenca de cada arquivo upstream foram MANTIDOS. O produto e o desenvolvedor original
+sao identificados como ONLYOFFICE / Ascensio System SIA; o nome do produto no Axuz e "Editor de documentos".
+
+ESTA E UMA VERSAO MODIFICADA. Data da modificacao: 2026-11-14 (AGPL-3.0, secao 5(a)).
+Versao base: ONLYOFFICE Docs v10.0.0.x (tags e commits exatos em blobs.lock e version.json).
+
+FONTE CORRESPONDENTE (AGPL-3.0, secao 13): todo o fonte, os patches abaixo e a receita de build estao no repositorio
+axuz_ops, pasta office/, no commit SOURCE-COMMIT (o commit exato em execucao vai em version.json do artefato).
+Os repositorios ONLYOFFICE usados (core, sdkjs, web-apps, server, ...) estao fixados por commit em blobs.lock.
+
+Modificacoes (cada uma e um arquivo em office/patches/):
+
+  build_tools-0001-jobs-por-env.patch                  paralelismo do build por variavel de ambiente
+  build_tools-0002-pin-depot_tools-e-ninja-jobs.patch  depot_tools fixado e ninja com -j explicito
+  build_tools-0003-lock-de-blobs.patch                 download/git clone so por blobs.lock (sha256/commit)
+  build_tools-0004-v8-sem-cipd-clang-gn.patch          V8 por commit do lock; gn/ninja compilados do fonte; sem cipd/clang
+  build_tools-0005-server-sem-pkg-e-sem-marketplace.patch  server sem pkg (node proprio, launchers); sem loja de plugins
+  build_tools-0006-npm-ci-estrito.patch                npm ci --ignore-scripts (integridade do lockfile)
+  build_tools-0007-sysroot-sem-fetch.patch             sysroot reconstruido por nos (stage sysroot); sem baixar sysroot pronto
+  build_tools-0008-python-do-sistema.patch             python3 do sistema (apt do snapshot); sem python3.tar.gz baixado
+  build_tools-0009-sem-cef-fora-do-desktop.patch       CEF (Chromium embarcado, so do desktop) fora do build do server
+  build_tools-0010-cmake-do-host-fora-do-ld-path-do-sysroot.patch  cmake/make do heif usam as libs do host (LD_LIBRARY_PATH do sysroot fora)
+  web-apps-0001-mobile-edit.patch                      edicao no navegador do celular religada (ver NOTAS)
+  web-apps-0002-mobile-forceview-main.patch            correcao do forceView na edicao mobile
+  web-apps-0003-sem-imagemin-binario.patch             sem otimizador de imagem baseado em binario baixado
+  web-apps-0004-mobile-npm-ci-e-marcador.patch         marcador axuz-mobile-edit-v1 no mobile e npm ci estrito do framework7-react
+  server-0001-ia-desligada.patch                       recurso de IA (AI Tools e proxy de provedores) desligado
+  sdkjs-0001-sem-asmjs-ie.patch                        sem fallback asm.js (IE11): os loaders nunca pedem *_ie.js/.js.mem
+  strip-marketing.py                                   remove links de marketing/ajuda do ONLYOFFICE (lista em
+                                                       modifications-marketing.tsv, dentro do artefato)
+
+Nao ha binario fechado no artefato: ver check-no-blob.sh e blobs.lock. Itens em [~] no blobs.lock (os 5 .wasm
+versionados no sdkjs) estao fixados por sha256 e aguardam rota de reconstrucao a partir do fonte.
+
+Licencas de componentes incorporados: server/3rd-Party.txt e node/LICENSE (Node.js, MIT, compilado do fonte).

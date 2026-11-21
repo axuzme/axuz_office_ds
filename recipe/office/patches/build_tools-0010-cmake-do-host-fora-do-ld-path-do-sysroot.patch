@@ -1,0 +1,40 @@
+diff --git a/scripts/core_common/modules/heif.py b/scripts/core_common/modules/heif.py
+--- a/scripts/core_common/modules/heif.py
++++ b/scripts/core_common/modules/heif.py
+@@ -38,6 +38,19 @@
+     xcode_sdk = "iphonesimulator"
+   return xcode_sdk
+ 
++# AXUZ: com --sysroot o set_sysroot_env poe o libstdc++ xenial em LD_LIBRARY_PATH e o cmake do HOST (builder, ubuntu 24.04) morre com
++# "GLIBCXX_3.4.xx not found". O cmake roda com as libs do host na frente; compilador/ligador continuam os do sysroot (--sysroot no toolchain).
++def cmake_host(args, prog="cmake"):
++  old = os.environ.get("LD_LIBRARY_PATH")
++  os.environ["LD_LIBRARY_PATH"] = "/usr/lib/x86_64-linux-gnu" + (":" + old if old else "")
++  try:
++    return base.cmd(prog, args)
++  finally:
++    if old is None:
++      os.environ.pop("LD_LIBRARY_PATH", None)
++    else:
++      os.environ["LD_LIBRARY_PATH"] = old
++
+ def fetch_repo(repo_url, branch_or_tag):
+   base.cmd("git", ["clone", "--depth", "1", "--branch", branch_or_tag, repo_url])
+   return
+@@ -115,13 +128,13 @@
+     base.set_sysroot_env(platform)
+ 
+   # run cmake
+-  base.cmd("cmake", cmake_args + cmake_args_ext)
++  cmake_host(cmake_args + cmake_args_ext)
+ 
+   # build
+   if "Unix Makefiles" in cmake_args_ext:
+-    base.cmd("make", ["-j4"])
++    cmake_host(["-j4"], "make")
+   else:
+-    base.cmd("cmake", ["--build", ".", "--config", build_type])
++    cmake_host(["--build", ".", "--config", build_type])
+ 
+   if config.option("sysroot") != "":
+     base.restore_sysroot_env()

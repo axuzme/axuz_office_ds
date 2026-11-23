@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     name: gitleaks secret scan
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 

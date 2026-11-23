@@ -1,0 +1,38 @@
+# ESTE ARQUIVO É GERADO de axuz_ops/security/dependabot-gha-only.yml.template
+# — você está olhando `.github/dependabot.yml`, uma CÓPIA. Editar aqui é drift que o
+# alguém copiar por cima apaga sem avisar. Mude o TEMPLATE.
+#
+# ATENÇÃO — ESTA VARIANTE NÃO TEM INSTALADOR. O `install-dependabot.sh` cobre
+# as variantes `go` e `npm`; esta é para os repos SEM runtime dep
+# (`axuz_archive`, `axuz_ops`, `axuz_shared_ui`) e foi posta à mão, o que o
+# `tpldrift.sh:250` registra. Depois de mudar o template, copie:
+#
+#   for r in axuz_archive axuz_ops axuz_shared_ui; do
+#     cp axuz_ops/security/dependabot-gha-only.yml.template $r/.github/dependabot.yml
+#   done
+#
+# O gate `tpldrift` do `axuz_ops/tests/run.sh` compara os dois byte a byte e
+# é ele que denuncia se alguém esquecer (item P-033).
+#
+# axuz_ops/security/dependabot-gha-only.yml.template
+# Repos SEM runtime deps (docs/scripts/lib .tsx via sync) — só GitHub Actions.
+
+version: 2
+updates:
+  # GitHub Actions mensal — churn baixo, agrupamento reduz ruído.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+      day: monday
+      time: '04:00'
+      timezone: UTC
+    open-pull-requests-limit: 3
+    groups:
+      gha-actions:
+        patterns: ['*']
+    commit-message:
+      prefix: 'ci(deps)'
+    labels:
+      - dependencies
+      - ci

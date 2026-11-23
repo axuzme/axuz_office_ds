@@ -1,0 +1,66 @@
+# ESTE ARQUIVO É GERADO de axuz_ops/security/workflow-gitleaks.yml.template
+# — você está olhando `.github/workflows/gitleaks.yml`, uma CÓPIA. Editar aqui é drift que o
+# próximo rollout de `axuz_ops/security/install-everything.sh` apaga sem avisar.
+# Mude o TEMPLATE e rode o instalador; o gate `tpldrift` do
+# `axuz_ops/tests/run.sh` compara os dois byte a byte (item P-033).
+#
+# axuz_ops/security/workflow-gitleaks.yml.template
+#
+# Secret scanning em todo PR + push. Bloqueia merge se algum secret
+# (API key, password, token, etc.) for detectado.
+#
+# NOTA: gitleaks-action@v2 requer GITLEAKS_LICENSE pago pra organizações.
+# Usamos o binário direto via curl — gratuito, mesma engine.
+
+name: gitleaks
+on:
+  # Piso 27: CI remoto NAO roda por commit/PR. Gate por commit e local
+  # (tools/ci.sh). Aqui so: disparo manual e tag de promocao.
+  workflow_dispatch:
+  push:
+    tags: ['hml-*', 'v*']
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    name: gitleaks secret scan
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: install gitleaks
+        run: |
+          GITLEAKS_VERSION='8.21.2'
+          curl -sSL "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" \
+            | tar -xz -C /tmp
+          sudo mv /tmp/gitleaks /usr/local/bin/
+          gitleaks version
+
+      - name: scan repository
+        run: |
+          # --redact: não printa secret no log; --no-banner: limpa output.
+          # .gitleaksignore no root libera historic commits triados.
+          gitleaks detect \
+            --source . \
+            --verbose \
+            --redact \
+            --no-banner \
+            --report-format json \
+            --report-path /tmp/gitleaks-report.json
+
+      - name: upload report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gitleaks-report
+          path: /tmp/gitleaks-report.json
+          retention-days: 30
+          if-no-files-found: ignore
